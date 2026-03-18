@@ -50,10 +50,24 @@ public class AgentStarter {
                         .or(ElementMatchers.nameStartsWith("io.github.javaagent.")));
 
         int count = 0;
-        for (InstrumentationPlugin plugin : ServiceLoader.load(InstrumentationPlugin.class, AgentStarter.class.getClassLoader())) {
-            log.info("[JavaAgent] Installing plugin: " + plugin.name());
-            agentBuilder = plugin.install(agentBuilder);
-            count++;
+        File pluginsDir = new File(agentDir, "plugins");
+        if (pluginsDir.isDirectory()) {
+            File[] jars = pluginsDir.listFiles(f -> f.getName().endsWith(".jar"));
+            if (jars != null) {
+                for (File jar : jars) {
+                    try {
+                        inst.appendToBootstrapClassLoaderSearch(new java.util.jar.JarFile(jar));
+                        PluginClassLoader cl = new PluginClassLoader(jar.toURI().toURL(), AgentStarter.class.getClassLoader());
+                        for (InstrumentationPlugin plugin : ServiceLoader.load(InstrumentationPlugin.class, cl)) {
+                            log.info("[JavaAgent] Installing plugin: " + plugin.name());
+                            agentBuilder = PluginInstaller.install(agentBuilder, plugin, cl);
+                            count++;
+                        }
+                    } catch (Exception e) {
+                        log.error("[JavaAgent] Failed to load plugin: " + jar.getName(), e);
+                    }
+                }
+            }
         }
 
         agentBuilder.installOn(inst);

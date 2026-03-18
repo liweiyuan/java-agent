@@ -1,15 +1,14 @@
 package io.github.javaagent.plugin.http;
 
-import io.github.javaagent.api.log.AgentLogger;
-import io.github.javaagent.api.log.LoggerFactory;
 import io.github.javaagent.api.plugin.InstrumentationPlugin;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.matcher.ElementMatchers;
+import io.github.javaagent.api.plugin.MethodMatcher;
+import io.github.javaagent.api.plugin.Transformation;
+import io.github.javaagent.api.plugin.TypeMatcher;
+
+import java.util.Collections;
+import java.util.List;
 
 public class HttpUrlConnectionPlugin implements InstrumentationPlugin {
-
-    private static final AgentLogger log = LoggerFactory.getLogger(HttpUrlConnectionPlugin.class);
 
     @Override
     public String name() {
@@ -17,13 +16,15 @@ public class HttpUrlConnectionPlugin implements InstrumentationPlugin {
     }
 
     @Override
-    public AgentBuilder install(AgentBuilder agentBuilder) {
-        log.debug("[http-plugin] installing...");
-        return agentBuilder
-                .type(ElementMatchers.named("java.net.HttpURLConnection")
-                        .or(ElementMatchers.isSubTypeOf(java.net.HttpURLConnection.class)))
-                .transform((builder, typeDescription, classLoader, module, protectionDomain) ->
-                        builder.visit(Advice.to(HttpUrlConnectionAdvice.class)
-                                .on(ElementMatchers.named("getResponseCode"))));
+    public List<Transformation> transformations() {
+        return Collections.singletonList(
+                Transformation.on(
+                        TypeMatcher.named("java.net.HttpURLConnection"),
+                        TypeMatcher.subtypeOf(java.net.HttpURLConnection.class)
+                ).withAdvice(
+                        MethodMatcher.named("getResponseCode"),
+                        HttpUrlConnectionAdvice.class
+                )
+        );
     }
 }

@@ -1,15 +1,17 @@
 package io.github.javaagent.plugin.jdbc;
 
-import io.github.javaagent.api.log.AgentLogger;
-import io.github.javaagent.api.log.LoggerFactory;
 import io.github.javaagent.api.plugin.InstrumentationPlugin;
-import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.asm.Advice;
-import net.bytebuddy.matcher.ElementMatchers;
+import io.github.javaagent.api.plugin.MethodMatcher;
+import io.github.javaagent.api.plugin.Transformation;
+import io.github.javaagent.api.plugin.TypeMatcher;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 public class JdbcStatementPlugin implements InstrumentationPlugin {
-
-    private static final AgentLogger log = LoggerFactory.getLogger(JdbcStatementPlugin.class);
 
     @Override
     public String name() {
@@ -17,35 +19,26 @@ public class JdbcStatementPlugin implements InstrumentationPlugin {
     }
 
     @Override
-    public AgentBuilder install(AgentBuilder agentBuilder) {
-        log.debug("[jdbc-plugin] installing...");
-
-        // 1. Statement.execute*(String sql) — 直接从参数取 SQL
-        agentBuilder = agentBuilder
-                .type(ElementMatchers.isSubTypeOf(java.sql.Statement.class)
-                        .and(ElementMatchers.not(ElementMatchers.isSubTypeOf(java.sql.PreparedStatement.class))))
-                .transform((builder, type, cl, module, pd) ->
-                        builder.visit(Advice.to(StatementAdvice.class)
-                                .on(ElementMatchers.nameStartsWith("execute")
-                                        .and(ElementMatchers.takesArgument(0, String.class)))));
-
-        // 2. Connection.prepareStatement(String) — 记录 SQL 与 PreparedStatement 的绑定
-        agentBuilder = agentBuilder
-                .type(ElementMatchers.isSubTypeOf(java.sql.Connection.class))
-                .transform((builder, type, cl, module, pd) ->
-                        builder.visit(Advice.to(ConnectionAdvice.class)
-                                .on(ElementMatchers.named("prepareStatement")
-                                        .and(ElementMatchers.takesArgument(0, String.class)))));
-
-        // 3. PreparedStatement.execute/executeQuery/executeUpdate（无 SQL 参数）
-        agentBuilder = agentBuilder
-                .type(ElementMatchers.isSubTypeOf(java.sql.PreparedStatement.class))
-                .transform((builder, type, cl, module, pd) ->
-                        builder.visit(Advice.to(PreparedStatementAdvice.class)
-                                .on(ElementMatchers.namedOneOf("execute", "executeQuery", "executeUpdate", "executeLargeUpdate")
-                                        .and(ElementMatchers.takesNoArguments()
-                                                .or(ElementMatchers.not(ElementMatchers.takesArgument(0, String.class)))))));
-
-        return agentBuilder;
+    public List<Transformation> transformations() {
+        return Arrays.asList(
+                // 1. Statement.execute*(String sql)
+                Transformation.on(TypeMatcher.subtypeOf(Statement.class))
+                        .withAdvice(
+                                MethodMatcher.nameStartsWith("execute").withArgument(0, String.class),
+                                StatementAdvice.class
+                        ),
+                // 2. Connection.prepareStatement(String) — 绑定 SQL 与 PreparedStatement
+                Transformation.on(TypeMatcher.subtypeOf(Connection.class))
+                        .withAdvice(
+                                MethodMatcher.named("prepareStatement").withArgument(0, String.class),
+                                ConnectionAdvice.class
+                        ),
+                // 3. PreparedStatement.execute*(无 SQL 参数)
+                Transformation.on(TypeMatcher.subtypeOf(PreparedStatement.class))
+                        .withAdvice(
+                                MethodMatcher.namedOneOf("execute", "executeQuery", "executeUpdate", "executeLargeUpdate").withNoArgs(),
+                                PreparedStatementAdvice.class
+                        )
+        );
     }
 }
