@@ -1,6 +1,5 @@
 package io.github.javaagent.api.plugin;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +9,9 @@ import java.util.List;
  */
 public final class MethodMatcher {
 
-    public enum NameStrategy { EXACT, STARTS_WITH, ONE_OF }
+    public enum NameStrategy {
+        EXACT, STARTS_WITH, ONE_OF
+    }
 
     public final NameStrategy nameStrategy;
     public final List<String> names;
@@ -22,8 +23,8 @@ public final class MethodMatcher {
     /** true = 要求无参数 */
     public final boolean noArgs;
 
-    private MethodMatcher(NameStrategy nameStrategy, List<String> names,
-                          Integer argIndex, String argType, boolean noArgs) {
+    private MethodMatcher(NameStrategy nameStrategy, List<String> names, Integer argIndex,
+            String argType, boolean noArgs) {
         this.nameStrategy = nameStrategy;
         this.names = names;
         this.argIndex = argIndex;
@@ -32,11 +33,13 @@ public final class MethodMatcher {
     }
 
     public static MethodMatcher named(String name) {
-        return new MethodMatcher(NameStrategy.EXACT, Collections.singletonList(name), null, null, false);
+        return new MethodMatcher(NameStrategy.EXACT, Collections.singletonList(name), null, null,
+                false);
     }
 
     public static MethodMatcher nameStartsWith(String prefix) {
-        return new MethodMatcher(NameStrategy.STARTS_WITH, Collections.singletonList(prefix), null, null, false);
+        return new MethodMatcher(NameStrategy.STARTS_WITH, Collections.singletonList(prefix), null,
+                null, false);
     }
 
     public static MethodMatcher namedOneOf(String... names) {

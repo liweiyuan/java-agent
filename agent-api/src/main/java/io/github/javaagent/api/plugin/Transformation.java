@@ -1,12 +1,10 @@
 package io.github.javaagent.api.plugin;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 /**
- * 描述一条字节码增强规则：匹配哪些类、哪些方法、用哪个 Advice。
- * 插件通过 {@link InstrumentationPlugin#transformations()} 返回规则列表。
+ * 描述一条字节码增强规则：匹配哪些类、哪些方法、用哪个 Advice。 插件通过 {@link InstrumentationPlugin#transformations()} 返回规则列表。
  */
 public final class Transformation {
 
@@ -19,7 +17,8 @@ public final class Transformation {
     /** Advice 类的全限定名，由 agent-core 用 Class.forName 加载 */
     public final String adviceClassName;
 
-    public Transformation(List<TypeMatcher> typeMatchers, MethodMatcher methodMatcher, String adviceClassName) {
+    public Transformation(List<TypeMatcher> typeMatchers, MethodMatcher methodMatcher,
+            String adviceClassName) {
         this.typeMatchers = typeMatchers;
         this.methodMatcher = methodMatcher;
         this.adviceClassName = adviceClassName;

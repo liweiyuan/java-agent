@@ -17,43 +17,56 @@ public final class PluginInstaller {
 
     private PluginInstaller() {}
 
-    public static AgentBuilder install(AgentBuilder agentBuilder, InstrumentationPlugin plugin, ClassLoader pluginClassLoader) {
+    @SuppressWarnings("unchecked")
+    public static AgentBuilder install(AgentBuilder agentBuilder, InstrumentationPlugin plugin,
+            ClassLoader pluginClassLoader) {
         ClassFileLocator locator = ClassFileLocator.ForClassLoader.of(pluginClassLoader);
         for (Transformation t : plugin.transformations()) {
             Class<?> adviceClass = loadAdvice(t.adviceClassName, pluginClassLoader);
-            agentBuilder = agentBuilder
-                    .type(buildTypeMatcher(t.typeMatchers))
-                    .transform((builder, type, cl, module, pd) ->
-                            builder.visit(Advice.to(adviceClass, locator)
-                                    .on(buildMethodMatcher(t.methodMatcher))));
+            agentBuilder = agentBuilder.type(buildTypeMatcher(t.typeMatchers))
+                    .transform((builder, type, cl, module, pd) -> builder.visit(Advice
+                            .to(adviceClass, locator).on(buildMethodMatcher(t.methodMatcher))));
         }
         return agentBuilder;
     }
 
-    private static ElementMatcher<net.bytebuddy.description.type.TypeDescription> buildTypeMatcher(java.util.List<TypeMatcher> matchers) {
-        ElementMatcher.Junction<net.bytebuddy.description.type.TypeDescription> result = ElementMatchers.none();
+    private static ElementMatcher<net.bytebuddy.description.type.TypeDescription> buildTypeMatcher(
+            java.util.List<TypeMatcher> matchers) {
+        ElementMatcher.Junction<net.bytebuddy.description.type.TypeDescription> result =
+                ElementMatchers.none();
         for (TypeMatcher m : matchers) {
             result = result.or(toElementMatcher(m));
         }
         return result;
     }
 
-    private static ElementMatcher.Junction<net.bytebuddy.description.type.TypeDescription> toElementMatcher(TypeMatcher m) {
+    private static ElementMatcher.Junction<net.bytebuddy.description.type.TypeDescription> toElementMatcher(
+            TypeMatcher m) {
         switch (m.strategy) {
-            case NAMED:      return ElementMatchers.named(m.className);
-            case SUBTYPE_OF: return ElementMatchers.isSubTypeOf(loadClass(m.className));
-            default:         throw new IllegalArgumentException("Unknown strategy: " + m.strategy);
+            case NAMED:
+                return ElementMatchers.named(m.className);
+            case SUBTYPE_OF:
+                return ElementMatchers.isSubTypeOf(loadClass(m.className));
+            default:
+                throw new IllegalArgumentException("Unknown strategy: " + m.strategy);
         }
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static ElementMatcher buildMethodMatcher(MethodMatcher m) {
         ElementMatcher.Junction result;
         switch (m.nameStrategy) {
-            case EXACT:       result = ElementMatchers.named(m.names.get(0)); break;
-            case STARTS_WITH: result = ElementMatchers.nameStartsWith(m.names.get(0)); break;
-            case ONE_OF:      result = ElementMatchers.namedOneOf(m.names.toArray(new String[0])); break;
-            default:          throw new IllegalArgumentException("Unknown strategy: " + m.nameStrategy);
+            case EXACT:
+                result = ElementMatchers.named(m.names.get(0));
+                break;
+            case STARTS_WITH:
+                result = ElementMatchers.nameStartsWith(m.names.get(0));
+                break;
+            case ONE_OF:
+                result = ElementMatchers.namedOneOf(m.names.toArray(new String[0]));
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown strategy: " + m.nameStrategy);
         }
         if (m.argIndex != null) {
             result = result.and(ElementMatchers.takesArgument(m.argIndex, loadClass(m.argType)));
