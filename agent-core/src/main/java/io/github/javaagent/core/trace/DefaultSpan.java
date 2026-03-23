@@ -5,7 +5,6 @@ import io.github.javaagent.api.trace.SpanStatus;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultSpan implements Span {
@@ -22,7 +21,7 @@ public class DefaultSpan implements Span {
 
     DefaultSpan(String traceId, String parentSpanId, String name) {
         this.traceId = traceId;
-        this.spanId = generateId();
+        this.spanId = IdGenerator.get().generateSpanId();
         this.parentSpanId = parentSpanId;
         this.name = name;
         this.startTimeNanos = System.nanoTime();
@@ -76,9 +75,5 @@ public class DefaultSpan implements Span {
     public String getStatusDescription() { return statusDescription; }
     public long getDurationMillis() {
         return TimeUnit.NANOSECONDS.toMillis(endTimeNanos - startTimeNanos);
-    }
-
-    private static String generateId() {
-        return UUID.randomUUID().toString().replace("-", "").substring(0, 16);
     }
 }

@@ -14,6 +14,7 @@
         <module>agent-core</module>
         <module>agent-plugin/plugin-http</module>
         <module>agent-plugin/plugin-jdbc</module>
+        <module>agent-plugin/plugin-executor</module>
         <module>agent-bootstrap</module>
     </modules>
 

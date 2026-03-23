@@ -11,7 +11,7 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>plugin-http</artifactId>
+    <artifactId>plugin-executor</artifactId>
 
     <dependencies>
         <dependency>

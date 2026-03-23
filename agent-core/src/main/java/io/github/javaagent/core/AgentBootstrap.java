@@ -6,8 +6,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 
 /**
- * JavaAgent 入口。
- * 职责：将 agent-api 注入 bootstrap，然后用 AgentClassLoader 加载真正的启动类 AgentStarter。
+ * JavaAgent 入口。 职责：将 agent-api 注入 bootstrap，然后用 AgentClassLoader 加载真正的启动类 AgentStarter。
  */
 public class AgentBootstrap {
 
@@ -20,13 +19,15 @@ public class AgentBootstrap {
     }
 
     private static void start(Instrumentation inst) throws Exception {
-        File agentJar = new File(AgentBootstrap.class.getProtectionDomain()
-                .getCodeSource().getLocation().getPath());
+        File agentJar = new File(
+                AgentBootstrap.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
         inst.appendToBootstrapClassLoaderSearch(new java.util.jar.JarFile(agentJar));
 
-        AgentClassLoader agentCL = new AgentClassLoader(new URL[]{agentJar.toURI().toURL()});
-        Class<?> starterClass = agentCL.loadClass("io.github.javaagent.core.AgentStarter");
+        @SuppressWarnings("resource")
+        AgentClassLoader agentClassLoader =
+                new AgentClassLoader(new URL[] {agentJar.toURI().toURL()});
+        Class<?> starterClass = agentClassLoader.loadClass("io.github.javaagent.core.AgentStarter");
         Method startMethod = starterClass.getMethod("start", Instrumentation.class, File.class);
         startMethod.invoke(null, inst, agentJar);
     }
