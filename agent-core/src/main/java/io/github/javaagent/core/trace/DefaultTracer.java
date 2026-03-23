@@ -5,8 +5,6 @@ import io.github.javaagent.api.context.Scope;
 import io.github.javaagent.api.trace.Span;
 import io.github.javaagent.api.trace.Tracer;
 
-import java.util.UUID;
-
 public class DefaultTracer implements Tracer {
 
     public static final DefaultTracer INSTANCE = new DefaultTracer();
@@ -43,7 +41,7 @@ public class DefaultTracer implements Tracer {
             Span parentSpan = parentContext.get(Span.CONTEXT_KEY);
 
             String traceId = parentSpan != null ? parentSpan.getTraceId()
-                    : UUID.randomUUID().toString().replace("-", "");
+                    : IdGenerator.get().generateTraceId();
             String parentSpanId = parentSpan != null ? parentSpan.getSpanId() : null;
 
             DefaultSpan span = new DefaultSpan(traceId, parentSpanId, spanName);

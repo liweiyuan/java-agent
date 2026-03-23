@@ -10,7 +10,7 @@ import java.util.List;
 public final class MethodMatcher {
 
     public enum NameStrategy {
-        EXACT, STARTS_WITH, ONE_OF
+        EXACT, STARTS_WITH, ONE_OF, CONSTRUCTOR
     }
 
     public final NameStrategy nameStrategy;
@@ -44,6 +44,11 @@ public final class MethodMatcher {
 
     public static MethodMatcher namedOneOf(String... names) {
         return new MethodMatcher(NameStrategy.ONE_OF, Arrays.asList(names), null, null, false);
+    }
+
+    /** 匹配构造方法 */
+    public static MethodMatcher isConstructor() {
+        return new MethodMatcher(NameStrategy.CONSTRUCTOR, Collections.<String>emptyList(), null, null, false);
     }
 
     /** 追加"第 index 个参数类型为 argType"的约束 */

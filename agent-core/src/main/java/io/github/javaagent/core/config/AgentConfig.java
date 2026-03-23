@@ -15,11 +15,15 @@ public class AgentConfig {
 
     public final LogConfig logging = new LogConfig();
 
+    /** 原始扁平 map，供插件读取自定义配置 */
+    public Map<String, String> rawConfig = new HashMap<>();
+
     public static AgentConfig load(File yamlFile) {
         AgentConfig config = new AgentConfig();
         if (!yamlFile.exists()) return config;
 
         Map<String, String> flat = parseFlat(yamlFile);
+        config.rawConfig = flat;
 
         String level = flat.get("logging.level");
         if (level != null) {
@@ -38,13 +42,14 @@ public class AgentConfig {
     }
 
     /**
-     * 将 yaml 展开为 "parent.child: value" 的扁平 map
+     * 将 yaml 展开为 "parent.child: value" 的扁平 map，列表项存为 "key[0]", "key[1]"
      */
     private static Map<String, String> parseFlat(File file) {
         Map<String, String> result = new HashMap<>();
         String[] parents = new String[10];
         int[] indents = new int[10];
         int depth = 0;
+        Map<String, Integer> listCounters = new HashMap<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -54,6 +59,22 @@ public class AgentConfig {
                 int indent = 0;
                 while (indent < line.length() && line.charAt(indent) == ' ') indent++;
                 String trimmed = line.trim();
+
+                // 处理列表项 "- value"
+                if (trimmed.startsWith("- ")) {
+                    String value = trimmed.substring(2).trim();
+                    // 构建父 key
+                    StringBuilder parentKey = new StringBuilder();
+                    for (int i = 0; i < depth; i++) {
+                        if (i > 0) parentKey.append('.');
+                        parentKey.append(parents[i]);
+                    }
+                    String pk = parentKey.toString();
+                    int idx = listCounters.containsKey(pk) ? listCounters.get(pk) : 0;
+                    result.put(pk + "[" + idx + "]", value);
+                    listCounters.put(pk, idx + 1);
+                    continue;
+                }
 
                 int colonIdx = trimmed.indexOf(':');
                 if (colonIdx < 0) continue;
@@ -67,7 +88,6 @@ public class AgentConfig {
                 indents[depth] = indent;
 
                 if (!value.isEmpty()) {
-                    // 构建完整 key
                     StringBuilder fullKey = new StringBuilder();
                     for (int i = 0; i <= depth; i++) {
                         if (i > 0) fullKey.append('.');

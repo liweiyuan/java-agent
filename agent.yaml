@@ -15,3 +15,10 @@ logging:
     size-mb: 10
     # 最多保留历史文件数
     max-backups: 5
+
+plugin:
+  executor:
+    # 包名前缀白名单，逗号分隔，只对匹配的 Runnable/Callable 实现类传播 Context，为空时增强所有类
+    # packages: com.example., org.myapp.task.
+    # 正则表达式白名单，逗号分隔（类全限定名匹配）
+    # patterns: com\.example\..*Task

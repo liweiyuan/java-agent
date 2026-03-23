@@ -59,6 +59,7 @@ public class AgentStarter {
                         inst.appendToBootstrapClassLoaderSearch(new java.util.jar.JarFile(jar));
                         PluginClassLoader cl = new PluginClassLoader(jar.toURI().toURL(), AgentStarter.class.getClassLoader());
                         for (InstrumentationPlugin plugin : ServiceLoader.load(InstrumentationPlugin.class, cl)) {
+                            plugin.init(config.rawConfig);
                             log.info("[JavaAgent] Installing plugin: " + plugin.name());
                             agentBuilder = PluginInstaller.install(agentBuilder, plugin, cl);
                             count++;

@@ -54,6 +54,9 @@ public final class PluginInstaller {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static ElementMatcher buildMethodMatcher(MethodMatcher m) {
+        if (m.nameStrategy == MethodMatcher.NameStrategy.CONSTRUCTOR) {
+            return ElementMatchers.isConstructor();
+        }
         ElementMatcher.Junction result;
         switch (m.nameStrategy) {
             case EXACT:
